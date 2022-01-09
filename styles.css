@@ -1,0 +1,41 @@
+#cuadricula {
+  display: grid;
+  grid-template-columns: 100px 100px 100px;
+  grid-template-rows: 100px 100px 100px;
+}
+
+.cuadro {
+  width: 100px;
+  height: 100px;
+}
+
+.cuadro-superior-izquierdo {
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
+}
+.cuadro-superior-central {
+  border-bottom: 1px solid black;
+}
+.cuadro-superior-derecho {
+  border-bottom: 1px solid black;
+  border-left: 1px solid black;
+}
+.cuadro-central-izquierdo {
+  border-right: 1px solid black;
+}
+.cuadro-central {
+}
+.cuadro-central-derecho {
+  border-left: 1px solid black;
+}
+.cuadro-inferior-izquierdo {
+  border-top: 1px solid black;
+  border-right: 1px solid black;
+}
+.cuadro-inferior-central {
+  border-top: 1px solid black;
+}
+.cuadro-inferior-derecho {
+  border-top: 1px solid black;
+  border-left: 1px solid black;
+}
