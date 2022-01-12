@@ -40,29 +40,46 @@ class Computadora {
   }
 
   // Algoritmo que recorre el árbol de posiciones para determinar el valor (-1, 0, 1) de la siguiente jugada
-  minimax(nodo, profundidad, jugadorMaximizador) {
+  minimax(nodo, profundidad, jugadorMaximizador, indice = null) {
     let valor;
+    let exploracion;
+    let indiceElegido = null;
     if (
       (profundidad =
         0 || nodo.obtenerHijos().length == 0 || nodo.evaluacion !== 0)
     ) {
-      return this.evaluarPosicion(nodo.posicion);
+      return { valor: this.evaluarPosicion(nodo.posicion), indice };
     }
     if (jugadorMaximizador) {
       valor = -100000;
       for (let hijo of nodo.obtenerHijos()) {
-        valor = Math.max(
-          valor,
-          this.minimax(hijo.nodo, profundidad - 1, false)
+        exploracion = this.minimax(
+          hijo.nodo,
+          profundidad - 1,
+          false,
+          hijo.indice
         );
+        if (exploracion.valor > valor) {
+          valor = exploracion.valor;
+          indiceElegido = hijo.indice;
+        }
       }
-      return valor;
+      return { valor, indice: indiceElegido };
     } else {
       valor = 100000;
       for (let hijo of nodo.obtenerHijos()) {
-        valor = Math.min(valor, this.minimax(hijo.nodo, profundidad - 1, true));
+        exploracion = this.minimax(
+          hijo.nodo,
+          profundidad - 1,
+          true,
+          hijo.indice
+        );
+        if (exploracion.valor < valor) {
+          valor = exploracion.valor;
+          indiceElegido = hijo.indice;
+        }
       }
-      return valor;
+      return { valor, indice: indiceElegido };
     }
   }
 
@@ -70,27 +87,11 @@ class Computadora {
   obtenerMejorJugada() {
     // Actualiza la posición del nodo a la más actual
     this.nodo = new Nodo(this, this.cuadricula.valores);
-    let mejorJugada;
-    let puntajeJugada;
-    let minimoPuntaje = 2;
-    let maximoPuntaje = -2;
-
-    for (let hijo of this.nodo.obtenerHijos()) {
-      if (this.pieza == "O") {
-        puntajeJugada = this.minimax(hijo.nodo, 20, true);
-        if (puntajeJugada < minimoPuntaje) {
-          mejorJugada = hijo;
-          minimoPuntaje = puntajeJugada;
-        }
-      } else {
-        puntajeJugada = this.minimax(hijo.nodo, 20, false);
-        if (puntajeJugada > maximoPuntaje) {
-          mejorJugada = hijo;
-          maximoPuntaje = puntajeJugada;
-        }
-      }
+    if (this.pieza == "O") {
+      return this.minimax(this.nodo, 20, false).indice;
+    } else {
+      return this.minimax(this.nodo, 20, true).indice;
     }
-    return mejorJugada ? mejorJugada.indice : null;
   }
 
   //Evalua si cierta posición con formato ['','','','','','','','',''] es una victoria para 'O' (-1), para 'X' (1) o empate (0)
@@ -329,9 +330,8 @@ class Cuadricula {
     if (this.verificarFilasVerticalesIguales(posicion) !== null)
       return this.verificarFilasVerticalesIguales(posicion);
 
-    if (this.verificarFilasDiagonalesIguales(posicion) !== null) {
+    if (this.verificarFilasDiagonalesIguales(posicion) !== null)
       return this.verificarFilasDiagonalesIguales(posicion);
-    }
 
     return this.verificarEmpate(posicion);
   }

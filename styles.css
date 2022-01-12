@@ -1,45 +1,106 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #222;
+  color: #ccc;
+}
+h1 {
+  width: 100%;
+  text-align: center;
+}
+#ganador {
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: larger;
+  height: 50px;
+}
+#puntuacion {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+#puntuacion-jugador,
+#puntuacion-computadora {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#puntuacion-jugador {
+  margin-right: 15px;
+}
+#puntuacion-computadora {
+  margin-left: 15px;
+}
+.acciones {
+  margin-bottom: 30px;
+}
+#reiniciar {
+  padding: 10px;
+  border: none;
+  color: #ccc;
+  background-color: transparent;
+  border: 1px solid white;
+}
+#reiniciar:hover {
+  cursor: pointer;
+  color: #222;
+  background-color: #ccc;
+  border: 1px solid black;
+}
+.centro {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
 #cuadricula {
   display: grid;
-  grid-template-columns: 100px 100px 100px;
-  grid-template-rows: 100px 100px 100px;
+  grid-template-columns: 160px 160px 160px;
+  grid-template-rows: 160px 160px 160px;
 }
 
 .cuadro {
-  width: 100px;
-  height: 100px;
+  width: 160px;
+  height: 160px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: xx-large;
+  font-size: 80px;
+  transition: all 0.2s ease-out;
+}
+.cuadro:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
 }
 
 .cuadro-superior-izquierdo {
-  border-bottom: 1px solid black;
-  border-right: 1px solid black;
+  border-bottom: 2px solid #ccc;
+  border-right: 2px solid #ccc;
 }
 .cuadro-superior-central {
-  border-bottom: 1px solid black;
+  border-bottom: 2px solid #ccc;
 }
 .cuadro-superior-derecho {
-  border-bottom: 1px solid black;
-  border-left: 1px solid black;
+  border-bottom: 2px solid #ccc;
+  border-left: 2px solid #ccc;
 }
 .cuadro-central-izquierdo {
-  border-right: 1px solid black;
+  border-right: 2px solid #ccc;
 }
 .cuadro-central {
 }
 .cuadro-central-derecho {
-  border-left: 1px solid black;
+  border-left: 2px solid #ccc;
 }
 .cuadro-inferior-izquierdo {
-  border-top: 1px solid black;
-  border-right: 1px solid black;
+  border-top: 2px solid #ccc;
+  border-right: 2px solid #ccc;
 }
 .cuadro-inferior-central {
-  border-top: 1px solid black;
+  border-top: 2px solid #ccc;
 }
 .cuadro-inferior-derecho {
-  border-top: 1px solid black;
-  border-left: 1px solid black;
+  border-top: 2px solid #ccc;
+  border-left: 2px solid #ccc;
 }
