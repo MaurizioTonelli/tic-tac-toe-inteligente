@@ -1,3 +1,17 @@
+const LINEAS_EN_CUADRICULA = [
+  //Horizontales
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  //Verticales
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  //Diagonales
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
 class Nodo {
   constructor(computadora, posicion) {
     this.computadora = computadora;
@@ -36,7 +50,7 @@ class Computadora {
     this.cuadricula = cuadricula;
     this.pieza = pieza;
     // Crea un nodo con la posición actual
-    this.nodo = new Nodo(this, this.cuadricula.valores);
+    this.nodo = new Nodo(this, this.cuadricula.posicionActual);
   }
 
   // Algoritmo que recorre el árbol de posiciones para determinar el valor (-1, 0, 1) de la siguiente jugada
@@ -45,13 +59,14 @@ class Computadora {
     let exploracion;
     let indiceElegido = null;
     if (
-      (profundidad =
-        0 || nodo.obtenerHijos().length == 0 || nodo.evaluacion !== 0)
+      profundidad === 0 ||
+      nodo.obtenerHijos().length == 0 ||
+      nodo.evaluacion !== 0
     ) {
       return { valor: this.evaluarPosicion(nodo.posicion), indice };
     }
     if (jugadorMaximizador) {
-      valor = -100000;
+      valor = -2;
       for (let hijo of nodo.obtenerHijos()) {
         exploracion = this.minimax(
           hijo.nodo,
@@ -66,7 +81,7 @@ class Computadora {
       }
       return { valor, indice: indiceElegido };
     } else {
-      valor = 100000;
+      valor = 2;
       for (let hijo of nodo.obtenerHijos()) {
         exploracion = this.minimax(
           hijo.nodo,
@@ -86,7 +101,7 @@ class Computadora {
   // Utiliza el algoritmo minimax para obtener el índice de la cuadrícula donde se debe colocar la siguiente pieza para la mejor jugada
   obtenerMejorJugada() {
     // Actualiza la posición del nodo a la más actual
-    this.nodo = new Nodo(this, this.cuadricula.valores);
+    this.nodo = new Nodo(this, this.cuadricula.posicionActual);
     if (this.pieza == "O") {
       return this.minimax(this.nodo, 20, false).indice;
     } else {
@@ -96,9 +111,9 @@ class Computadora {
 
   //Evalua si cierta posición con formato ['','','','','','','','',''] es una victoria para 'O' (-1), para 'X' (1) o empate (0)
   evaluarPosicion(posicion) {
-    if (this.cuadricula.obtenerGanadorDePosicion(posicion) === "X") {
+    if (this.cuadricula.obtenerGanador(posicion) === "X") {
       return 1;
-    } else if (this.cuadricula.obtenerGanadorDePosicion(posicion) === "O") {
+    } else if (this.cuadricula.obtenerGanador(posicion) === "O") {
       return -1;
     } else {
       return 0;
@@ -116,7 +131,7 @@ class Juego {
     this.turnoActual = "X";
     this.ganador = null;
     if (this.turnoActual === this.turnoDeComputadora) {
-      this.jugarTurno();
+      this.jugarTurno(this.computadora.obtenerMejorJugada(), "computadora");
     }
   }
 
@@ -124,38 +139,34 @@ class Juego {
     this.turnoActual = this.turnoActual === "X" ? "O" : "X";
   }
 
-  jugarTurno(indice = null) {
+  jugarTurno(indice, tipoJugador) {
     //No permitir jugar más cuando ya haya un ganador
     if (this.ganador) return;
     //Si no es el turno del jugador, salir de la función cuando intente dar clic en un cuadro
-    if (indice !== null && this.turnoActual === this.turnoDeComputadora) return;
-    //Juega el turno del jugador
-    if (this.turnoActual !== this.turnoDeComputadora) {
+    if (
+      tipoJugador === "jugador" &&
+      this.turnoActual === this.turnoDeComputadora
+    )
+      return;
+
+    if (indice !== null) {
       this.tablero.dibujarJugada(indice);
-      this.cambiarTurnoActual();
-      if (this.verificarFinDeJuego()) return;
     }
-    //Juega el turno de la computadora
+    this.cambiarTurnoActual();
+
+    if (this.juegoTerminado()) {
+      this.controlador.finalizarJuego();
+      return;
+    }
+
     if (this.turnoActual === this.turnoDeComputadora) {
-      let jugadaComputadora = this.computadora.obtenerMejorJugada();
-      if (jugadaComputadora !== null) {
-        this.tablero.dibujarJugada(jugadaComputadora);
-      }
-      this.cambiarTurnoActual();
-      if (this.verificarFinDeJuego()) return;
+      this.jugarTurno(this.computadora.obtenerMejorJugada(), "computadora");
     }
   }
 
-  escribirGanadorEnDOM() {
-    document.querySelector("#ganador").textContent =
-      this.ganador + " ganó la ronda";
-  }
-
-  verificarFinDeJuego() {
-    this.ganador = this.tablero.obtenerGanadorDePosicion();
+  juegoTerminado() {
+    this.ganador = this.tablero.obtenerGanador(this.tablero.posicionActual);
     if (this.ganador) {
-      this.controlador.actualizarPuntuacion();
-      this.escribirGanadorEnDOM();
       return true;
     }
     return false;
@@ -187,6 +198,16 @@ class ControladorDeJuego {
       this.puntuacionJugador;
     document.querySelector("#puntuacion-computadora > p").textContent =
       this.puntuacionComputadora;
+  }
+
+  finalizarJuego() {
+    this.actualizarPuntuacion();
+    this.escribirGanadorEnDOM();
+  }
+
+  escribirGanadorEnDOM() {
+    document.querySelector("#ganador").textContent =
+      this.juego.ganador + " ganó la ronda";
   }
 
   // Reinicia el juego con un turno nuevo para la computadora
@@ -240,127 +261,57 @@ class Cuadricula {
   constructor(juego) {
     this.tag = document.querySelector("#cuadricula");
     this.juego = juego;
-    this.valores = ["", "", "", "", "", "", "", "", ""];
+    this.posicionActual = ["", "", "", "", "", "", "", "", ""];
     this.dibujar();
   }
-
-  // Función genérica que revisa 3 símbolos de una posicion dada para verificar si son iguales, y regresa uno si es que hay. Si no recibe posición, utiliza la actual del tablero
-  verificarLineaDeCuadrosConMismoSimbolo(a, b, c, posicion) {
-    let posicionAEvaluar = this.valores;
-    if (posicion !== null) {
-      posicionAEvaluar = posicion;
-    }
-    if (
-      posicionAEvaluar[a] === posicionAEvaluar[b] &&
-      posicionAEvaluar[a] === posicionAEvaluar[c] &&
-      posicionAEvaluar[a] !== ""
-    ) {
-      //Regresa el símbolo que se repite en la línea
-      return posicionAEvaluar[a];
-    }
-    return null;
-  }
-  // Función generica que obtiene una arreglo de índices de líneas [[a,b,c], ...] para verificar si tienen un símbolo igual
-  obtenerGanadorDeLinea(arr, posicion) {
-    // Obtiene las lineas de 3 elementos
-    for (let elem of arr) {
-      if (
-        this.verificarLineaDeCuadrosConMismoSimbolo(...elem, posicion) !== null
-      ) {
-        return this.verificarLineaDeCuadrosConMismoSimbolo(...elem, posicion);
-      }
-    }
-    return null;
-  }
-
-  // De acuerdo con una posición dada con el formato ['','','','','','','','',''], checa las lineas horizontales para corroborar si hay un ganador
-  verificarFilasHorizontalesIguales(posicion) {
-    return this.obtenerGanadorDeLinea(
-      [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-      ],
-      posicion
-    );
-  }
-
-  // De acuerdo con una posición dada con el formato ['','','','','','','','',''], checa las lineas verticales para corroborar si hay un ganador
-  verificarFilasVerticalesIguales(posicion) {
-    return this.obtenerGanadorDeLinea(
-      [
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-      ],
-      posicion
-    );
-  }
-
-  // De acuerdo con una posición dada con el formato ['','','','','','','','',''], checa las lineas diagonales para corroborar si hay un ganador
-  verificarFilasDiagonalesIguales(posicion) {
-    return this.obtenerGanadorDeLinea(
-      [
-        [0, 4, 8],
-        [2, 4, 6],
-      ],
-      posicion
-    );
-  }
-
   // De acuerdo con una posición dada con el formato ['','','','','','','','',''], decide si existe un empate
-  verificarEmpate(posicion) {
-    let posicionAEvaluar = this.valores;
-    if (posicion !== null) {
-      posicionAEvaluar = posicion;
-    }
-    for (let cuadro of posicionAEvaluar) {
+  hayEmpate(posicion) {
+    for (let cuadro of posicion) {
       if (cuadro === "") {
-        return null;
+        return false;
       }
     }
     return "Nadie";
   }
 
-  // De acuerdo con una posición dada con el formato ['','','','','','','','',''], decide quien es el ganador
-  obtenerGanadorDePosicion(posicion = null) {
-    if (this.verificarFilasHorizontalesIguales(posicion) !== null)
-      return this.verificarFilasHorizontalesIguales(posicion);
-
-    if (this.verificarFilasVerticalesIguales(posicion) !== null)
-      return this.verificarFilasVerticalesIguales(posicion);
-
-    if (this.verificarFilasDiagonalesIguales(posicion) !== null)
-      return this.verificarFilasDiagonalesIguales(posicion);
-
-    return this.verificarEmpate(posicion);
+  obtenerGanador(posicion) {
+    for (let elem of LINEAS_EN_CUADRICULA) {
+      if (
+        posicion[elem[0]] === posicion[elem[1]] &&
+        posicion[elem[0]] === posicion[elem[2]] &&
+        posicion[elem[0]] !== ""
+      ) {
+        //Regresa el símbolo que se repite en la línea (ganador)
+        return posicion[elem[0]];
+      }
+    }
+    if (this.hayEmpate(posicion)) return this.hayEmpate(posicion);
+    return null;
   }
 
-  //Obtiene el cuadro del HTML que tenga el indice correspondiente
   obtenerCuadroConIndice(indice) {
     return document.querySelector(`[data-index='${indice}']`);
   }
-  //Función auxiliar que dibuja el símbolo 'O' o 'X' en un lugar de la cuadrícula
+
   dibujarJugada(indice) {
     this.obtenerCuadroConIndice(indice).textContent = this.juego.turnoActual;
-    this.valores[parseInt(indice)] = this.juego.turnoActual;
+    this.posicionActual[parseInt(indice)] = this.juego.turnoActual;
   }
 
-  AgregarEventoDeClickACuadro(cuadro) {
+  agregarEventoDeClickACuadro(cuadro) {
     cuadro.addEventListener("click", () => {
-      if (this.valores[parseInt(cuadro.dataset.index)] === "") {
-        this.juego.jugarTurno(parseInt(cuadro.dataset.index));
+      if (this.posicionActual[parseInt(cuadro.dataset.index)] === "") {
+        this.juego.jugarTurno(parseInt(cuadro.dataset.index), "jugador");
       }
     });
   }
 
-  //Instancía cada cuadro de la cuadrícula de Tic Tac Toe
   construirCuadro(index) {
     let cuadro = new Cuadro(index).construir();
-    this.AgregarEventoDeClickACuadro(cuadro);
+    this.agregarEventoDeClickACuadro(cuadro);
     return cuadro;
   }
-  // Dibuja la cuadrícula de Tic Tac Toe en el HTML
+
   dibujar() {
     this.tag.innerHTML = "";
     for (let i = 0; i < 9; i++) {
